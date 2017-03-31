@@ -20,21 +20,20 @@ SDL_Surface *image_ball = NULL;
 SDL_Surface *image_paddle = NULL;
 SDL_Surface *PlayerScoreSur;
 SDL_Surface *AIScoreSur;
+SDL_Surface *Background = NULL;
 SDL_Rect PlayerPaddle;
 SDL_Rect AIPaddle;
 SDL_Rect Scribe;
 SDL_Rect Ball;
 SDL_Rect PlayerScoreRect;
 SDL_Rect AIScoreRect;
-SDL_Rect Time = { 360,559,40,80 };
+SDL_Rect Backrect = { 0,0,800,600 };
 TTF_Font *times = NULL;
 SDL_Color white = { 255,255,255 };
 SDL_Color red = { 255,0,0 };
 Mix_Chunk *paddlesound, *scoresound, *hitsound;
 Mix_Music *backgroundsong, *finalsong;
-SDL_Surface *Background = NULL;
 SDL_Texture *Backtext = NULL;
-SDL_Rect Backrect = { 0,0,800,600 };
 double second;
 int xvel = -2;
 int yvel = -2;
@@ -46,7 +45,40 @@ bool winner = 0;
 bool running = true;
 bool stop = 0;
 
-void Drawscreen();
+bool BallinRect(int, int, SDL_Rect);
+bool CheckCollision(SDL_Rect, SDL_Rect);
+void RenderText(SDL_Texture, SDL_Surface, SDL_Rect);
+void SetUp();
+void LoadGame();
+void Quit();
+int GameMenu();
+int PauseGame();
+int SelectInput();
+int InitGame();
+int RandomNumber();
+void Collisions();
+void Game(int);
+void DrawScore();
+void DrawScreen();
+void Instructor(int, int);
+void PaddleMove();
+void Player2PaddleMove();
+void PaddleMoveByMouse();
+void SetPaddleY(int);
+void PrintResultPvP();
+void PrintResultAI();
+void LogicAI(int);
+void LogicPvP();
+void ResetBall(int ,int );
+void AIPaddleMove();
+void ContinueGame();
+
+int main(int agrc, char *agrs[]) {
+	int menu = InitGame();
+	SDL_Delay(500);
+	Game(menu);
+	return 0;
+}
 
 void RenderText(SDL_Texture *text, SDL_Surface *sur, SDL_Rect *Rect) {
 	text = SDL_CreateTextureFromSurface(renderer, sur);
@@ -90,7 +122,7 @@ void SetUp() {
 
 }
 
-void Loadgame(){
+void LoadGame() {
 	SDL_Init(SDL_INIT_EVERYTHING);
 	TTF_Init();
 	SDL_Init(SDL_INIT_AUDIO);
@@ -159,7 +191,7 @@ void DrawScore() {
 	stringstream ascore;
 	pscore << PlayerScore;
 	ascore << AIScore;
-	SDL_Surface *playersur = TTF_RenderText_Solid(times,pscore.str().c_str(),white);
+	SDL_Surface *playersur = TTF_RenderText_Solid(times, pscore.str().c_str(), white);
 	SDL_Surface *aisur = TTF_RenderText_Solid(times, ascore.str().c_str(), white);
 	SDL_Texture *ptext = NULL;
 	SDL_Texture *atext = NULL;
@@ -169,10 +201,10 @@ void DrawScore() {
 }
 
 void BallMove() {
-		Ball.x += (xvel);
-		Ball.y += (yvel);
-		SDL_Delay(5);
-		//Sleep(1);
+	Ball.x += (xvel);
+	Ball.y += (yvel);
+	SDL_Delay(5);
+	//Sleep(1);
 }
 
 void ResetBall(int a, int b) {
@@ -192,7 +224,7 @@ bool BallinRect(int x, int y, SDL_Rect rect) {
 	{
 		return true;
 	}
-		
+
 	return false;
 }
 
@@ -243,15 +275,15 @@ void Collisions() {
 		BallMove();
 	}
 	//kiem tra Paddle
-	if (CheckCollision(Ball,PlayerPaddle))
+	if (CheckCollision(Ball, PlayerPaddle))
 	{
 		xvel = -xvel;
 		Ball.x = PlayerPaddle.x + PlayerPaddle.w + 1;
 		Mix_PlayChannel(-1, paddlesound, 0);
 		BallMove();
-		
+
 	}
-	if (CheckCollision(Ball,AIPaddle))
+	if (CheckCollision(Ball, AIPaddle))
 	{
 		xvel = -xvel;
 		Ball.x = AIPaddle.x - Ball.w;
@@ -259,19 +291,19 @@ void Collisions() {
 		BallMove();
 	}
 	int a = RandomNumber();
-	if (Ball.x + Ball.w > 781 ) {
+	if (Ball.x + Ball.w > 781) {
 		//Player 1 scores
 		PlayerScore += 1;
 		Mix_PlayChannel(-1, scoresound, 0);
 		DrawScore();
-		ResetBall(2, 2*a); //sua -1 -1 = 1 -1 
+		ResetBall(2, 2 * a); //sua -1 -1 = 1 -1 
 	}
 	else if (Ball.x < 19) {
 		//Player 2 scores
 		AIScore += 1;
 		Mix_PlayChannel(-1, scoresound, 0);
 		DrawScore();
-		ResetBall(-2, 2*a); // sua -1 1 = -1 -1
+		ResetBall(-2, 2 * a); // sua -1 1 = -1 -1
 	}
 }
 
@@ -289,15 +321,15 @@ void PaddleMove() {
 void AIPaddleMove() {
 	if (AIScore + PlayerScore < 2) {
 		if (AIPaddle.y + AIPaddle.h * 0.5 >= Ball.y + Ball.h * 0.5) {
-				AIPaddle.y -= 1;
-			}
-			else AIPaddle.y += 1;
+			AIPaddle.y -= 1;
 		}
+		else AIPaddle.y += 1;
+	}
 	else {
-			if (AIPaddle.y + AIPaddle.h * 0.5 >= Ball.y + Ball.h * 0.5) {
-				AIPaddle.y -= xvel;
-			}
-			else AIPaddle.y += yvel;
+		if (AIPaddle.y + AIPaddle.h * 0.5 >= Ball.y + Ball.h * 0.5) {
+			AIPaddle.y -= xvel;
+		}
+		else AIPaddle.y += yvel;
 	}
 	if (AIPaddle.y < 1) AIPaddle.y = 1;
 	if (AIPaddle.y + AIPaddle.h > 599)
@@ -357,12 +389,12 @@ void PrintResultAI() {
 
 	if (PlayerScore == winscore) {
 		xvel = 0, yvel = 0;
-		Message = TTF_RenderText_Solid(times, "YOU WIN !!", white);
+		Message = TTF_RenderText_Solid(times, "VICTORY !!", white);
 		RenderText(Mess_text, Message, &Rect);
 	}
 	else if (AIScore == winscore) {
 		xvel = 0, yvel = 0;
-		Message = TTF_RenderText_Solid(times, "YOU LOSE !!", white);
+		Message = TTF_RenderText_Solid(times, "DEFEATED !!", white);
 		RenderText(Mess_text, Message, &Rect);
 	}
 	SDL_Surface *Continue = NULL;
@@ -375,9 +407,12 @@ void PrintResultAI() {
 }
 
 void PrintResultPvP() {
-	SDL_Surface *Message = NULL;
-	SDL_Texture *Mess_text = NULL;
-	SDL_Rect Rect = { 180,250,500,80 };
+	SDL_Surface *Message1 = NULL;
+	SDL_Texture *Mess1_text = NULL;
+	SDL_Rect Rect1 = { 100,250,250,80 };
+	SDL_Surface *Message2 = NULL;
+	SDL_Texture *Mess2_text = NULL;
+	SDL_Rect Rect2 = { 500,250,250,80 };
 	SDL_DestroyRenderer(renderer);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 	if (renderer == NULL)
@@ -390,16 +425,29 @@ void PrintResultPvP() {
 	picture_sur = IMG_Load("menubackground.png");
 	picture = SDL_CreateTextureFromSurface(renderer, picture_sur);
 	SDL_RenderCopy(renderer, picture, NULL, &result);
-
+	int j = 0;
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+	for (int i = 1; i <= 25; ++i) {
+		Scribe.x = 398;
+		Scribe.y = j;
+		Scribe.h = 20;
+		Scribe.w = 4;
+		SDL_RenderFillRect(renderer, &Scribe);
+		j = j + 30;
+	}
 	if (PlayerScore == winscore) {
 		xvel = 0, yvel = 0;
-		Message = TTF_RenderText_Solid(times, "Player 1 WIN !!", white);
-		RenderText(Mess_text,Message,&Rect);
+		Message1 = TTF_RenderText_Solid(times, "Player 1 WIN !!", white);
+		RenderText(Mess1_text, Message1, &Rect1);
+		Message2 = TTF_RenderText_Solid(times, "Player 2 LOSE !!", white);
+		RenderText(Mess2_text, Message2, &Rect2);
 	}
 	else if (AIScore == winscore) {
 		xvel = 0, yvel = 0;
-		Message = TTF_RenderText_Solid(times, "Player 2 WIN !!", white);
-		RenderText(Mess_text, Message, &Rect);
+		Message1 = TTF_RenderText_Solid(times, "Player 1 LOSE !!", white);
+		RenderText(Mess1_text, Message1, &Rect1);
+		Message2 = TTF_RenderText_Solid(times, "Player 2 WIN !!", white);
+		RenderText(Mess2_text, Message2, &Rect2);
 	}
 	SDL_Surface *Continue = NULL;
 	SDL_Texture *Con_text = NULL;
@@ -457,14 +505,14 @@ int GameMenu() {
 			switch (menuevent.type)
 			{
 			case SDL_QUIT:
-					SDL_FreeSurface(MenuSur[0]);
-					SDL_DestroyTexture(MenuText[0]);
-					SDL_FreeSurface(MenuSur[1]);
-					SDL_DestroyTexture(MenuText[1]);
-					SDL_FreeSurface(MenuSur[2]);
-					SDL_DestroyTexture(MenuText[2]);
-					SDL_FreeSurface(Background);
-					SDL_DestroyTexture(Backtext);
+				SDL_FreeSurface(MenuSur[0]);
+				SDL_DestroyTexture(MenuText[0]);
+				SDL_FreeSurface(MenuSur[1]);
+				SDL_DestroyTexture(MenuText[1]);
+				SDL_FreeSurface(MenuSur[2]);
+				SDL_DestroyTexture(MenuText[2]);
+				SDL_FreeSurface(Background);
+				SDL_DestroyTexture(Backtext);
 				return 2;
 			case SDL_MOUSEMOTION:
 				mousex = menuevent.motion.x;
@@ -529,7 +577,7 @@ int GameMenu() {
 			}
 		}
 	}
-	
+
 	if (30 > (SDL_GetTicks() - time)) {
 		SDL_Delay(30 > (SDL_GetTicks() - time));
 	}
@@ -538,10 +586,10 @@ int GameMenu() {
 }
 
 void LogicAI(int method) {
-	if(method == 0)
-	PaddleMove();
-	else 
-	PaddleMoveByMouse();
+	if (method == 0)
+		PaddleMove();
+	else
+		PaddleMoveByMouse();
 	AIPaddleMove();
 	BallMove();
 	Collisions();
@@ -565,7 +613,7 @@ void LogicPvP()
 	if (PlayerScore == winscore || AIScore == winscore) winner = true;
 }
 
-void Drawscreen() {
+void DrawScreen() {
 	int j = 0;
 	//SDL_FillRect(screen, NULL, 0);
 	SDL_Rect Top = { 0,0,800,10 };
@@ -601,15 +649,15 @@ void Drawscreen() {
 int SelectInput() {
 	int input;
 	const SDL_MessageBoxButtonData button[] = {
-		{0,0,"Keyboard"},
-		{0,1,"Mouse"}
+		{ 0,0,"Keyboard" },
+		{ 0,1,"Mouse" }
 	};
-	const SDL_MessageBoxColorScheme colorScheme [5]= {
-		{255,255,255}, //background color
-		{0,0,0}, //Text color
-		{255,255,0}, //button color
-		{255,255,255}, //button background
-		{0,0,0} //button text
+	const SDL_MessageBoxColorScheme colorScheme[5] = {
+		{ 255,255,255 }, //background color
+		{ 0,0,0 }, //Text color
+		{ 255,255,0 }, //button color
+		{ 255,255,255 }, //button background
+		{ 0,0,0 } //button text
 	};
 	const SDL_MessageBoxData messageboxdata{
 		SDL_MESSAGEBOX_INFORMATION,
@@ -656,19 +704,19 @@ int PauseGame() {
 	else return pause;
 }
 
-void Instructor(int menu,int inputmethod) {
+void Instructor(int menu, int inputmethod) {
 	if (menu == 0)
-		if(inputmethod != 1)
-		SDL_ShowSimpleMessageBox(0, "How to play :D", "Press Up or Down to move the paddle\nPress p to pause", window);
-		else 
-		SDL_ShowSimpleMessageBox(0, "How to play :D", "Using mouse to move the paddle\nPress p to pause", window);
+		if (inputmethod != 1)
+			SDL_ShowSimpleMessageBox(0, "How to play :D", "Press Up or Down to move the paddle\nPress SPACE to pause", window);
+		else
+			SDL_ShowSimpleMessageBox(0, "How to play :D", "Using mouse to move the paddle\nPress SPACE to pause", window);
 	else
-		SDL_ShowSimpleMessageBox(0, "How to play :D", "Player 1 press Up or Down to move the paddle \nPlayer 2 Press W or S to move the paddle\nPress p to pause", window);
+		SDL_ShowSimpleMessageBox(0, "How to play :D", "Player 1 press Up or Down to move the paddle \nPlayer 2 Press W or S to move the paddle\nPress SPACE to pause", window);
 }
 
 int InitGame() {
 	IMG_Init(IMG_INIT_PNG);
-	Loadgame();
+	LoadGame();
 	int menu = 0;
 	menu = GameMenu();
 	return menu;
@@ -681,11 +729,11 @@ void Game(int menu) {
 	{
 		SDL_ShowSimpleMessageBox(0, "Render init error", SDL_GetError(), window);
 	}
-	second = SDL_GetTicks()/1000;
+	second = SDL_GetTicks() / 1000;
 	if (menu == 0) {
 		int inputmethod = SelectInput();
-		Instructor(menu,inputmethod);
-		while (running == true ) {
+		Instructor(menu, inputmethod);
+		while (running == true) {
 			SDL_PollEvent(&occur);
 			if (occur.type == SDL_QUIT) {
 				running = false;
@@ -695,7 +743,7 @@ void Game(int menu) {
 			{
 				switch (occur.key.keysym.sym)
 				{
-				case SDLK_p:
+				case SDLK_SPACE:
 					int pause = PauseGame();
 					stop = true;
 					if (pause == 0)
@@ -713,7 +761,7 @@ void Game(int menu) {
 			if (stop == false) {
 				LogicAI(inputmethod);
 				if (winner == false) {
-					Drawscreen();
+					DrawScreen();
 				}
 				else {
 					PrintResultAI();
@@ -722,18 +770,18 @@ void Game(int menu) {
 		}
 	}
 	else if (menu == 1) {
-		Instructor(menu,0);
+		Instructor(menu, 0);
 		while (running == true) {
 			SDL_PollEvent(&occur);
-			if (occur.type == SDL_QUIT) 
-				{
+			if (occur.type == SDL_QUIT)
+			{
 				Quit();
-				} 
+			}
 			else if (occur.type == SDL_KEYDOWN)
 			{
 				switch (occur.key.keysym.sym)
 				{
-				case SDLK_p:
+				case SDLK_SPACE:
 					int pause = PauseGame();
 					stop = true;
 					if (pause == 0)
@@ -751,7 +799,7 @@ void Game(int menu) {
 			if (stop == false) {
 				LogicPvP();
 				if (winner == false)
-					Drawscreen();
+					DrawScreen();
 				else PrintResultPvP();
 			}
 		}
@@ -760,11 +808,4 @@ void Game(int menu) {
 	{
 		Quit();
 	}
-}
-
-int main(int agrc, char *agrs[]) {
-	int menu = InitGame();
-	SDL_Delay(500);
-	Game(menu);
-	return 0;
 }
