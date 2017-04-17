@@ -496,6 +496,8 @@ int GameMenu() {
 	MenuText[0] = SDL_CreateTextureFromSurface(renderer, MenuSur[0]);
 	MenuText[1] = SDL_CreateTextureFromSurface(renderer, MenuSur[1]);
 	MenuText[2] = SDL_CreateTextureFromSurface(renderer, MenuSur[2]);
+	for (int i = 0; i < 3; ++i)
+		SDL_RenderCopy(renderer, MenuText[i], NULL, &MenuRect[i]);
 	SDL_RenderPresent(renderer);
 	SDL_Event menuevent;
 	while (true)
