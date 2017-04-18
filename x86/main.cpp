@@ -706,7 +706,7 @@ int PauseGame() {
 	else return pause;
 }
 
-void Instructor(int menu, int inputmethod) {
+void Instruction(int menu, int inputmethod) {
 	if (menu == 0)
 		if (inputmethod != 1)
 			SDL_ShowSimpleMessageBox(0, "How to play :D", "Press Up or Down to move the paddle\nPress SPACE to pause", window);
